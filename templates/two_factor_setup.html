@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Configurar 2FA{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h5 mb-3">Configurar autenticacion en dos pasos</h1>
+        <p>Escanea el siguiente codigo QR con Google Authenticator, Authy u otra app compatible. Si no puedes escanearlo, introduce el codigo manualmente.</p>
+        <div class="bg-light border rounded p-3 mb-3">
+          <code class="fw-semibold">{{ secret }}</code>
+        </div>
+        <p class="mb-3">URI: <small class="text-muted">{{ provisioning_uri }}</small></p>
+        <form action="{{ url_for('auth.disable_two_factor') }}" method="post" class="d-flex gap-2">
+          <button type="submit" class="btn btn-outline-danger">Desactivar 2FA</button>
+          <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Volver al panel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

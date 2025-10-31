@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Editar cuenta{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-3">Editar cuenta</h1>
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.service.label(class="form-label") }}
+              {{ form.service(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.username.label(class="form-label") }}
+              {{ form.username(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.password.label(class="form-label") }}
+              <div class="input-group password-meter">
+                {{ form.password(class="form-control account-password-input") }}
+                <span class="input-group-text password-strength">0%</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              {{ form.confirm_password.label(class="form-label") }}
+              {{ form.confirm_password(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.owner_id.label(class="form-label") }}
+              {{ form.owner_id(class="form-select") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.device_id.label(class="form-label") }}
+              {{ form.device_id(class="form-select") }}
+            </div>
+            <div class="col-12">
+              {{ form.notes.label(class="form-label") }}
+              {{ form.notes(class="form-control", rows=3) }}
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('accounts.list_accounts') }}" class="btn btn-outline-secondary">Cancelar</a>
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  initPasswordStrength('.account-password-input');
+</script>
+{% endblock %}

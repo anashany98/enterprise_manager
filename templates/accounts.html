@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Cuentas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0">Gestion de cuentas</h1>
+    <p class="text-muted mb-0">Passwords cifrados con AES-256: comparte de forma segura.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <div class="btn-group">
+      <a href="{{ url_for('export_route', table='accounts', fmt='csv') }}" class="btn btn-outline-secondary">CSV</a>
+      <a href="{{ url_for('export_route', table='accounts', fmt='xlsx') }}" class="btn btn-outline-secondary">XLSX</a>
+      <a href="{{ url_for('export_route', table='accounts', fmt='pdf') }}" class="btn btn-outline-secondary">PDF</a>
+    </div>
+    {% if current_user.role in ['admin', 'technician'] %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+      <i class="fa-solid fa-key me-2"></i>Nueva cuenta
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle" id="accountsTable">
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Usuario</th>
+            <th>Propietario</th>
+            <th>Dispositivo</th>
+            <th>Modificado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in accounts %}
+          <tr data-account-id="{{ account.id }}">
+            <td>{{ account.service }}</td>
+            <td>{{ account.username }}</td>
+            <td>{{ account.owner.name if account.owner else 'N/D' }}</td>
+            <td>{{ account.device.serial_number if account.device else 'N/D' }}</td>
+            <td>{{ account.last_modified|datetime }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary reveal-password" data-account="{{ account.id }}"><i class="fa-solid fa-eye"></i></button>
+              {% if current_user.role in ['admin', 'technician'] or account.owner_id == current_user.id %}
+              <a href="{{ url_for('accounts.edit_account', account_id=account.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+              {% endif %}
+              {% if current_user.role == 'admin' %}
+              <form action="{{ url_for('accounts.delete_account', account_id=account.id) }}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Eliminar cuenta?')">Eliminar</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if current_user.role in ['admin', 'technician'] %}
+<div class="modal fade" id="createAccountModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nueva cuenta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('accounts.create_account') }}" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.service.label(class="form-label") }}
+              {{ form.service(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.username.label(class="form-label") }}
+              {{ form.username(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.password.label(class="form-label") }}
+              <div class="input-group password-meter">
+                {{ form.password(class="form-control account-password-input") }}
+                <span class="input-group-text password-strength">0%</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              {{ form.confirm_password.label(class="form-label") }}
+              {{ form.confirm_password(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.owner_id.label(class="form-label") }}
+              {{ form.owner_id(class="form-select") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.device_id.label(class="form-label") }}
+              {{ form.device_id(class="form-select") }}
+            </div>
+            <div class="col-12">
+              {{ form.notes.label(class="form-label") }}
+              {{ form.notes(class="form-control", rows=3) }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  initDataTable('#accountsTable');
+  initPasswordStrength('.account-password-input');
+  bindRevealPassword();
+</script>
+{% endblock %}

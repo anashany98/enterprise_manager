@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Editar usuario{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-3">Editar usuario</h1>
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.name.label(class="form-label") }}
+              {{ form.name(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.position.label(class="form-label") }}
+              {{ form.position(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.email.label(class="form-label") }}
+              {{ form.email(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.phone.label(class="form-label") }}
+              {{ form.phone(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.country.label(class="form-label") }}
+              {{ form.country(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.location.label(class="form-label") }}
+              {{ form.location(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.role.label(class="form-label") }}
+              {{ form.role(class="form-select", disabled=current_user.id == user.id and current_user.role != 'admin') }}
+            </div>
+            <div class="col-md-6 d-flex align-items-center">
+              <div class="form-check form-switch mt-4">
+                {{ form.active(class="form-check-input", role="switch") }}
+                {{ form.active.label(class="form-check-label ms-2") }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control") }}
+              <div class="form-text">{{ form.password.description }}</div>
+            </div>
+            <div class="col-md-6">
+              {{ form.confirm_password.label(class="form-label") }}
+              {{ form.confirm_password(class="form-control") }}
+            </div>
+            <div class="col-12">
+              {{ form.notes.label(class="form-label") }}
+              {{ form.notes(class="form-control", rows=3) }}
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">Cancelar</a>
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Dispositivos{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0">Inventario de dispositivos</h1>
+    <p class="text-muted mb-0">Controla equipos y asignaciones.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('export_route', table='devices', fmt='xlsx') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-download me-2"></i>Exportar</a>
+    {% if current_user.role in ['admin', 'technician'] %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDeviceModal">
+      <i class="fa-solid fa-plus me-2"></i>Nuevo dispositivo
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle" id="devicesTable">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Serie</th>
+            <th>Marca</th>
+            <th>Usuario</th>
+            <th>Pais</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for device in devices %}
+          <tr>
+            <td>{{ device.type }}</td>
+            <td>{{ device.serial_number }}</td>
+            <td>{{ device.brand or "N/D" }}</td>
+            <td>{{ device.assigned_user.name if device.assigned_user else "Sin asignar" }}</td>
+            <td>{{ device.country or "N/D" }}</td>
+            <td><span class="badge text-bg-light text-uppercase">{{ device.status }}</span></td>
+            <td class="text-end">
+              {% if current_user.role in ['admin', 'technician'] %}
+              <a href="{{ url_for('devices.edit_device', device_id=device.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+              {% endif %}
+              {% if current_user.role == 'admin' %}
+              <form action="{{ url_for('devices.delete_device', device_id=device.id) }}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Eliminar dispositivo?')">Eliminar</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if current_user.role in ['admin', 'technician'] %}
+<div class="modal fade" id="createDeviceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo dispositivo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('devices.create_device') }}" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.type.label(class="form-label") }}
+              {{ form.type(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.status.label(class="form-label") }}
+              {{ form.status(class="form-select") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.brand.label(class="form-label") }}
+              {{ form.brand(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.model.label(class="form-label") }}
+              {{ form.model(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.serial_number.label(class="form-label") }}
+              {{ form.serial_number(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.purchase_date.label(class="form-label") }}
+              {{ form.purchase_date(class="form-control", type="date") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.country.label(class="form-label") }}
+              {{ form.country(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.location.label(class="form-label") }}
+              {{ form.location(class="form-control") }}
+            </div>
+            <div class="col-md-12">
+              {{ form.assigned_user_id.label(class="form-label") }}
+              {{ form.assigned_user_id(class="form-select") }}
+            </div>
+            <div class="col-12">
+              {{ form.notes.label(class="form-label") }}
+              {{ form.notes(class="form-control", rows=3) }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  initDataTable('#devicesTable');
+</script>
+{% endblock %}

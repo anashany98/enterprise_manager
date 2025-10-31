@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100 border-0 bg-gradient-primary text-white">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3 display-6"><i class="fa-solid fa-users"></i></div>
+        <div>
+          <p class="text-uppercase mb-0 small">Usuarios</p>
+          <h2 class="mb-0">{{ total_users }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100 border-0 bg-gradient-success text-white">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3 display-6"><i class="fa-solid fa-laptop"></i></div>
+        <div>
+          <p class="text-uppercase mb-0 small">Dispositivos</p>
+          <h2 class="mb-0">{{ total_devices }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100 border-0 bg-gradient-warning text-dark">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3 display-6"><i class="fa-solid fa-key"></i></div>
+        <div>
+          <p class="text-uppercase mb-0 small">Cuentas</p>
+          <h2 class="mb-0">{{ total_accounts }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-body-tertiary">
+        Dispositivos por pais
+      </div>
+      <div class="card-body">
+        <canvas id="devicesCountryChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-body-tertiary">
+        Dispositivos por estado
+      </div>
+      <div class="card-body">
+        <canvas id="devicesStatusChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-body-tertiary">
+        Cuentas por usuario
+      </div>
+      <div class="card-body">
+        <canvas id="accountsUserChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
+        Actividad reciente
+        <a href="{{ url_for('main.view_logs') }}" class="btn btn-sm btn-outline-secondary">Ver todo</a>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Accion</th>
+                <th>Usuario</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in recent_logs %}
+              <tr>
+                <td>{{ log.occurred_at|datetime }}</td>
+                <td><span class="badge text-bg-light">{{ log.action }}</span></td>
+                <td>{{ log.user.name if log.user else "Sistema" }}</td>
+                <td>{{ log.ip_address or "N/D" }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">Sin actividad registrada.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const chartData = {{ chart_data|tojson }};
+  renderPieChart('devicesCountryChart', chartData.devicesByCountry.labels, chartData.devicesByCountry.values, 'Pais');
+  renderDoughnutChart('devicesStatusChart', chartData.devicesByStatus.labels, chartData.devicesByStatus.values, 'Estado');
+  renderBarChart('accountsUserChart', chartData.accountsByUser.labels, chartData.accountsByUser.values, 'Cuentas');
+</script>
+{% endblock %}

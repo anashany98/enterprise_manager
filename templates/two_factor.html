@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Verificacion 2FA{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h5 text-center mb-3">Codigo de verificacion</h1>
+        <p class="text-muted">Introduce el codigo generado por tu app 2FA para <strong>{{ email }}</strong>.</p>
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.token.label(class="form-label") }}
+            {{ form.token(class="form-control text-center fs-4", autocomplete="one-time-code") }}
+            {% for error in form.token.errors %}
+            <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+          {{ form.submit(class="btn btn-primary w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

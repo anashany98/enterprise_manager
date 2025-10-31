@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0">Gestion de usuarios</h1>
+    <p class="text-muted mb-0">Administra credenciales y roles del equipo.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('export_route', table='users', fmt='xlsx') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-download me-2"></i>Exportar</a>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+      <i class="fa-solid fa-user-plus me-2"></i>Nuevo usuario
+    </button>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle" id="usersTable">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Pais</th>
+            <th>Ubicacion</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td><span class="badge text-bg-light text-uppercase">{{ user.role }}</span></td>
+            <td>{{ user.country or "N/D" }}</td>
+            <td>{{ user.location or "N/D" }}</td>
+            <td>
+              {% if user.active %}
+              <span class="badge text-bg-success">Activo</span>
+              {% else %}
+              <span class="badge text-bg-secondary">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+              {% if current_user.role == 'admin' and current_user.id != user.id %}
+              <form action="{{ url_for('users.delete_user', user_id=user.id) }}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Eliminar usuario?')">Eliminar</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createUserModalLabel">Nuevo usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('users.create_user') }}" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.name.label(class="form-label") }}
+              {{ form.name(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.position.label(class="form-label") }}
+              {{ form.position(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.email.label(class="form-label") }}
+              {{ form.email(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.phone.label(class="form-label") }}
+              {{ form.phone(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.country.label(class="form-label") }}
+              {{ form.country(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.location.label(class="form-label") }}
+              {{ form.location(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.role.label(class="form-label") }}
+              {{ form.role(class="form-select") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.active.label(class="form-label d-block") }}
+              <div class="form-check form-switch">
+                {{ form.active(class="form-check-input", role="switch") }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control") }}
+              <div class="form-text">{{ form.password.description }}</div>
+            </div>
+            <div class="col-md-6">
+              {{ form.confirm_password.label(class="form-label") }}
+              {{ form.confirm_password(class="form-control") }}
+            </div>
+            <div class="col-12">
+              {{ form.notes.label(class="form-label") }}
+              {{ form.notes(class="form-control", rows=3) }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  initDataTable('#usersTable');
+</script>
+{% endblock %}

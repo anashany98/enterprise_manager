@@ -1,0 +1,27 @@
+services:
+  web:
+    build: .
+    container_name: enterprise_manager_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+
+  db:
+    image: postgres:16-alpine
+    container_name: enterprise_manager_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: empresa
+      POSTGRES_USER: empresa
+      POSTGRES_PASSWORD: superseguro
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
