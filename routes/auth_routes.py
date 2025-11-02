@@ -12,9 +12,9 @@ from flask import (
 )
 from flask_login import current_user, login_required, login_user, logout_user
 
-from ..forms import LoginForm, TwoFactorForm
-from ..models import User, db
-from ..utils import log_action
+from forms import LoginForm, TwoFactorForm
+from models import User, db
+from utils import log_action
 
 bp = Blueprint("auth", __name__)
 

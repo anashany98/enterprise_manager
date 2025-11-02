@@ -3,9 +3,9 @@ from flask_login import login_required
 
 from sqlalchemy.orm import joinedload
 
-from ..forms import DeviceForm
-from ..models import Device, User, db
-from ..utils import log_action, role_required
+from forms import DeviceForm
+from models import Device, User, db
+from utils import log_action, role_required
 
 bp = Blueprint("devices", __name__, url_prefix="/devices")
 

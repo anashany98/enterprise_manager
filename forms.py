@@ -11,15 +11,7 @@ from wtforms import (
     SubmitField,
     TextAreaField,
 )
-from wtforms.validators import (
-    DataRequired,
-    Email,
-    EqualTo,
-    Length,
-    Optional,
-    Regexp,
-    ValidationError,
-)
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, Regexp, ValidationError
 
 ROLE_CHOICES = [
     ("admin", "Administrador"),
@@ -34,16 +26,15 @@ DEVICE_STATUS_CHOICES = [
 ]
 
 
+def optional_int_coerce(value):
+    if value in (None, "", "None"):
+        return None
+    return int(value)
+
+
 def password_complexity_validator(form, field):
-    password = field.data or ""
-    if len(password) < 10:
-        raise ValidationError("La contrasena debe tener al menos 10 caracteres.")
-    if password.lower() == password or password.upper() == password:
-        raise ValidationError("Debe incluir mayusculas y minusculas.")
-    if not any(char.isdigit() for char in password):
-        raise ValidationError("Debe incluir al menos un numero.")
-    if not any(not char.isalnum() for char in password):
-        raise ValidationError("Debe incluir al menos un simbolo.")
+    # Password complexity restrictions disabled per requirement.
+    return
 
 
 class LoginForm(FlaskForm):
@@ -115,7 +106,7 @@ class AccountForm(FlaskForm):
         validators=[DataRequired(), EqualTo("password", message="Las contrasenas no coinciden.")],
     )
     owner_id = SelectField("Propietario", coerce=int, validators=[DataRequired()])
-    device_id = SelectField("Dispositivo", coerce=int, validators=[Optional()])
+    device_id = SelectField("Dispositivo", coerce=optional_int_coerce, validators=[Optional()])
     notes = TextAreaField("Notas", validators=[Optional()])
     submit = SubmitField("Guardar cuenta")
 

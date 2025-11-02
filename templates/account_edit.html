@@ -21,12 +21,20 @@
               {{ form.password.label(class="form-label") }}
               <div class="input-group password-meter">
                 {{ form.password(class="form-control account-password-input") }}
+                <button type="button" class="btn btn-outline-secondary toggle-password">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
                 <span class="input-group-text password-strength">0%</span>
               </div>
             </div>
             <div class="col-md-6">
               {{ form.confirm_password.label(class="form-label") }}
-              {{ form.confirm_password(class="form-control") }}
+              <div class="input-group">
+                {{ form.confirm_password(class="form-control") }}
+                <button type="button" class="btn btn-outline-secondary toggle-password">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="col-md-6">
               {{ form.owner_id.label(class="form-label") }}

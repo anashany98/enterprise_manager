@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import event, func
 from sqlalchemy.orm import validates
 
-from .crypto_utils import decrypt_password, encrypt_password
+from crypto_utils import decrypt_password, encrypt_password
 
 db = SQLAlchemy()
 login_manager = LoginManager()

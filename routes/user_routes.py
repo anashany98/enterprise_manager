@@ -1,9 +1,9 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
 from flask_login import current_user, login_required
 
-from ..forms import UserForm
-from ..models import User, db
-from ..utils import log_action, role_required
+from forms import UserForm
+from models import User, db
+from utils import log_action, role_required
 
 bp = Blueprint("users", __name__, url_prefix="/users")
 
@@ -20,12 +20,23 @@ def list_users():
 @login_required
 @role_required("admin")
 def create_user():
+    current_app.logger.info("=== CREATE USER DEBUG ===")
+    current_app.logger.info(f"Request method: {request.method}")
+    current_app.logger.info(f"Request form data: {dict(request.form)}")
+    current_app.logger.info(f"Request headers: {dict(request.headers)}")
+
     form = UserForm()
+    current_app.logger.info(f"Form data after creation: {form.data}")
+    current_app.logger.info(f"Form errors before validation: {form.errors}")
+
     if form.validate_on_submit():
+        current_app.logger.info("Form validation passed")
         if User.query.filter_by(email=form.email.data.lower()).first():
+            current_app.logger.warning(f"Email already exists: {form.email.data.lower()}")
             flash("Ya existe un usuario con ese correo electronico.", "danger")
             return redirect(url_for("users.list_users"))
 
+        current_app.logger.info("Creating user object")
         user = User(
             name=form.name.data,
             position=form.position.data,
@@ -38,16 +49,23 @@ def create_user():
             active=form.active.data,
         )
         if form.password.data:
+            current_app.logger.info("Setting password")
             user.set_password(form.password.data)
         else:
+            current_app.logger.warning("No password provided")
             flash("Debe establecer una contrasena para el nuevo usuario.", "danger")
             return redirect(url_for("users.list_users"))
 
+        current_app.logger.info("Adding user to session")
         db.session.add(user)
+        current_app.logger.info("Committing to database")
         db.session.commit()
+        current_app.logger.info(f"User created successfully with ID: {user.id}")
         flash("Usuario creado correctamente.", "success")
         log_action("users.create", metadata={"user_id": user.id})
     else:
+        current_app.logger.error(f"Form validation failed. Errors: {form.errors}")
+        current_app.logger.error(f"Form data: {form.data}")
         flash("Error al crear el usuario. Revise el formulario.", "danger")
 
     return redirect(url_for("users.list_users"))

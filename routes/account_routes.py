@@ -1,6 +1,7 @@
 from flask import (
     Blueprint,
     Response,
+    current_app,
     flash,
     jsonify,
     redirect,
@@ -11,9 +12,9 @@ from flask import (
 from flask_login import current_user, login_required
 from sqlalchemy.orm import joinedload
 
-from ..forms import AccountForm
-from ..models import Account, Device, User, db
-from ..utils import log_action, role_required
+from forms import AccountForm
+from models import Account, Device, User, db
+from utils import log_action, role_required
 
 bp = Blueprint("accounts", __name__, url_prefix="/accounts")
 
@@ -22,7 +23,7 @@ def _populate_form_choices(form: AccountForm) -> None:
     users = User.query.filter_by(active=True).order_by(User.name.asc()).all()
     devices = Device.query.order_by(Device.type.asc()).all()
     form.owner_id.choices = [(user.id, user.name) for user in users]
-    form.device_id.choices = [(0, "Sin dispositivo")] + [(d.id, d.serial_number) for d in devices]
+    form.device_id.choices = [(None, "Sin dispositivo")] + [(d.id, d.serial_number) for d in devices]
 
 
 def _password_is_reused(password: str, exclude_account_id: int | None = None) -> bool:
@@ -57,15 +58,18 @@ def list_accounts():
 def create_account():
     form = AccountForm()
     _populate_form_choices(form)
+    current_app.logger.info("=== CREATE ACCOUNT DEBUG ===")
+    current_app.logger.info(f"Request method: {request.method}")
+    current_app.logger.info(f"Request form data: {dict(request.form)}")
+    current_app.logger.info(f"Form data after creation: {form.data}")
+    current_app.logger.info(f"Form errors before validation: {form.errors}")
     if form.validate_on_submit():
         password_plain = form.password.data
         if _password_is_reused(password_plain):
             flash("La contrasena ya esta siendo utilizada por otra cuenta.", "warning")
             return redirect(url_for("accounts.list_accounts"))
 
-        device_id = form.device_id.data or None
-        if device_id == 0:
-            device_id = None
+        device_id = form.device_id.data
 
         account = Account(
             service=form.service.data,
@@ -80,6 +84,12 @@ def create_account():
         flash("Cuenta creada correctamente.", "success")
         log_action("accounts.create", metadata={"account_id": account.id})
     else:
+        current_app.logger.error(f"Form validation failed. Errors: {form.errors}")
+        for field_name, errors in form.errors.items():
+            field = getattr(form, field_name, None)
+            label = field.label.text if field else field_name
+            for error in errors:
+                flash(f"{label}: {error}", "danger")
         flash("Error al crear la cuenta.", "danger")
 
     return redirect(url_for("accounts.list_accounts"))
@@ -109,9 +119,7 @@ def edit_account(account_id: int):
             account.service = form.service.data
             account.username = form.username.data
             account.owner_id = form.owner_id.data
-            device_id = form.device_id.data or None
-            if device_id == 0:
-                device_id = None
+            device_id = form.device_id.data
             account.device_id = device_id
             account.notes = form.notes.data
             account.set_password(password_plain)

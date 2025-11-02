@@ -107,12 +107,22 @@
             </div>
             <div class="col-md-6">
               {{ form.password.label(class="form-label") }}
-              {{ form.password(class="form-control") }}
+              <div class="input-group">
+                {{ form.password(class="form-control") }}
+                <button type="button" class="btn btn-outline-secondary toggle-password">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
               <div class="form-text">{{ form.password.description }}</div>
             </div>
             <div class="col-md-6">
               {{ form.confirm_password.label(class="form-label") }}
-              {{ form.confirm_password(class="form-control") }}
+              <div class="input-group">
+                {{ form.confirm_password(class="form-control") }}
+                <button type="button" class="btn btn-outline-secondary toggle-password">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="col-12">
               {{ form.notes.label(class="form-label") }}

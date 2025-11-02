@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Optional
 from flask import abort, current_app, flash, has_request_context, request
 from flask_login import current_user
 
-from .models import Log, db
+from models import Log, db
 
 
 def get_client_ip() -> str:

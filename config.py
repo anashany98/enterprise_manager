@@ -35,7 +35,7 @@ class Config:
     REMEMBER_COOKIE_DURATION = timedelta(days=14)
 
     # Flask-WTF espera un número (segundos), no un timedelta
-    WTF_CSRF_TIME_LIMIT = 24 * 3600  # 24 h
+    WTF_CSRF_TIME_LIMIT = None  # Deshabilitado para desarrollo
     WTF_CSRF_SSL_STRICT = False  # cambia a True en producción HTTPS
 
     # --- Rutas internas ---

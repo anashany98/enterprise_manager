@@ -53,11 +53,11 @@ from werkzeug.middleware.proxy_fix import ProxyFix  # type: ignore
 
 from sqlalchemy.orm import joinedload  # type: ignore
 
-from .config import Config, get_config
-from .crypto_utils import decrypt_blob, encrypt_blob
-from .models import Account, Device, Log, User, create_default_admin, db, login_manager
-from .routes import account_routes, auth_routes, device_routes, user_routes
-from .utils import log_action
+from config import Config, get_config
+from crypto_utils import decrypt_blob, encrypt_blob
+from models import Account, Device, Log, User, create_default_admin, db, login_manager
+from routes import account_routes, auth_routes, device_routes, user_routes
+from utils import log_action
 
 
 def create_app(config_object: type[Config] | None = None) -> Flask:
