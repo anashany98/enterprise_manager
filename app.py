@@ -250,11 +250,12 @@ def _create_api_blueprint(app: Flask):
                 "service": account.service,
                 "username": account.username,
                 "owner": account.owner.name if account.owner else None,
-                "device": account.device.serial_number if account.device else None,
+                "device": ", ".join(device.serial_number for device in account.devices),
+                "devices": [device.serial_number for device in account.devices],
                 "notes": account.notes,
                 "last_modified": account.last_modified.isoformat() if account.last_modified else None,
             }
-            for account in Account.query.options(joinedload(Account.owner), joinedload(Account.device)).all()
+            for account in Account.query.options(joinedload(Account.owner), joinedload(Account.devices)).all()
         ]
         return jsonify({"accounts": accounts})
 
@@ -416,9 +417,10 @@ def _table_to_dataframe(table: str) -> pd.DataFrame:
             {
                 **account.to_dict(),
                 "owner": account.owner.name if account.owner else None,
-                "device": account.device.serial_number if account.device else None,
+                "device": ", ".join(device.serial_number for device in account.devices),
+                "devices": [device.serial_number for device in account.devices],
             }
-            for account in Account.query.options(joinedload(Account.owner), joinedload(Account.device)).all()
+            for account in Account.query.options(joinedload(Account.owner), joinedload(Account.devices)).all()
         ]
         return pd.DataFrame(data)
     if table == "logs":

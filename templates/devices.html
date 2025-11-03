@@ -1,6 +1,7 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Dispositivos{% endblock %}
 {% block content %}
+{% set category_labels = {'computer': 'Ordenador', 'mobile': 'Movil', 'tablet': 'Tablet', 'peripheral': 'Periferico'} %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h1 class="h3 mb-0">Inventario de dispositivos</h1>
@@ -23,10 +24,13 @@
         <thead>
           <tr>
             <th>Tipo</th>
+            <th>Categoria</th>
             <th>Serie</th>
             <th>Marca</th>
+            <th>Sistema</th>
             <th>Usuario</th>
             <th>Pais</th>
+            <th>IP</th>
             <th>Estado</th>
             <th class="text-end">Acciones</th>
           </tr>
@@ -35,10 +39,13 @@
           {% for device in devices %}
           <tr>
             <td>{{ device.type }}</td>
+            <td>{{ category_labels.get(device.category, device.category or "N/D") }}</td>
             <td>{{ device.serial_number }}</td>
             <td>{{ device.brand or "N/D" }}</td>
+            <td>{{ device.operating_system or "N/D" }}</td>
             <td>{{ device.assigned_user.name if device.assigned_user else "Sin asignar" }}</td>
             <td>{{ device.country or "N/D" }}</td>
+            <td>{{ device.ip_address or "N/D" }}</td>
             <td><span class="badge text-bg-light text-uppercase">{{ device.status }}</span></td>
             <td class="text-end">
               {% if current_user.role in ['admin', 'technician'] %}
@@ -75,12 +82,16 @@
               {{ form.type(class="form-control") }}
             </div>
             <div class="col-md-6">
+              {{ form.category.label(class="form-label") }}
+              {{ form.category(class="form-select device-category-select") }}
+            </div>
+            <div class="col-md-6">
               {{ form.status.label(class="form-label") }}
               {{ form.status(class="form-select") }}
             </div>
             <div class="col-md-6">
               {{ form.brand.label(class="form-label") }}
-              {{ form.brand(class="form-control") }}
+              {{ form.brand(class="form-select device-brand-select", **{'data-initial': form.brand.data or '', 'data-placeholder': 'Seleccione una marca'}) }}
             </div>
             <div class="col-md-6">
               {{ form.model.label(class="form-label") }}
@@ -101,6 +112,14 @@
             <div class="col-md-6">
               {{ form.location.label(class="form-label") }}
               {{ form.location(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.ip_address.label(class="form-label") }}
+              {{ form.ip_address(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.operating_system.label(class="form-label") }}
+              {{ form.operating_system(class="form-select device-os-select", **{'data-initial': form.operating_system.data or '', 'data-placeholder': 'Seleccione un sistema operativo'}) }}
             </div>
             <div class="col-md-12">
               {{ form.assigned_user_id.label(class="form-label") }}
@@ -126,5 +145,85 @@
 {% block extra_js %}
 <script>
   initDataTable('#devicesTable');
+
+  const deviceBrandMap = {{ device_brand_map|tojson }};
+  const deviceOSMap = {{ device_os_map|tojson }};
+
+  function buildOptions(map, category, placeholderLabel, currentValue) {
+    const options = new Map();
+    options.set("", placeholderLabel);
+    const categoryOptions = map[category] || [];
+    categoryOptions.forEach(([value, label]) => {
+      if (!options.has(value)) {
+        options.set(value, label);
+      }
+    });
+    if (currentValue && !options.has(currentValue)) {
+      options.set(currentValue, currentValue);
+    }
+    return options;
+  }
+
+  function applyOptions(select, options, currentValue) {
+    if (!select) return;
+    const previous = currentValue || select.dataset.initial || "";
+    select.innerHTML = "";
+    options.forEach((label, value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      select.appendChild(option);
+    });
+    select.value = previous;
+    select.dataset.initial = select.value || "";
+  }
+
+  function refreshDeviceForm(form) {
+    if (!form) return;
+    const categorySelect = form.querySelector(".device-category-select");
+    if (!categorySelect) return;
+    const brandSelect = form.querySelector(".device-brand-select");
+    const osSelect = form.querySelector(".device-os-select");
+    const categoryValue = categorySelect.value || categorySelect.dataset.initial || "computer";
+
+    if (brandSelect) {
+      const brandOptions = buildOptions(
+        deviceBrandMap,
+        categoryValue,
+        brandSelect.dataset.placeholder || "Seleccione una marca",
+        brandSelect.value
+      );
+      applyOptions(brandSelect, brandOptions, brandSelect.value);
+    }
+
+    if (osSelect) {
+      const osOptions = buildOptions(
+        deviceOSMap,
+        categoryValue,
+        osSelect.dataset.placeholder || "Seleccione un sistema operativo",
+        osSelect.value
+      );
+      applyOptions(osSelect, osOptions, osSelect.value);
+    }
+  }
+
+  function bindDeviceForm(select) {
+    const form = select.closest("form");
+    select.addEventListener("change", () => refreshDeviceForm(form));
+    refreshDeviceForm(form);
+  }
+
+  document.querySelectorAll(".device-category-select").forEach(bindDeviceForm);
+
+  document.addEventListener("shown.bs.modal", (event) => {
+    const modal = event.target;
+    const form = modal.querySelector("form");
+    if (form) {
+      const categorySelect = form.querySelector(".device-category-select");
+      if (categorySelect) {
+        refreshDeviceForm(form);
+      }
+    }
+  });
 </script>
 {% endblock %}

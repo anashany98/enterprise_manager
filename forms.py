@@ -7,10 +7,12 @@ from wtforms import (
     HiddenField,
     PasswordField,
     SelectField,
+    SelectMultipleField,
     StringField,
     SubmitField,
     TextAreaField,
 )
+from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, Regexp, ValidationError
 
 ROLE_CHOICES = [
@@ -23,7 +25,105 @@ DEVICE_STATUS_CHOICES = [
     ("active", "Activo"),
     ("maintenance", "Mantenimiento"),
     ("retired", "Retirado"),
+    ("damaged", "Danado"),
 ]
+
+DEVICE_CATEGORY_CHOICES = [
+    ("computer", "Ordenador"),
+    ("mobile", "Movil"),
+    ("tablet", "Tablet"),
+    ("peripheral", "Periferico"),
+]
+
+DEVICE_BRAND_MAP = {
+    "computer": [
+        ("Acer", "Acer"),
+        ("Alienware", "Alienware"),
+        ("Asus", "Asus"),
+        ("Dell", "Dell"),
+        ("Gigabyte", "Gigabyte"),
+        ("HP", "HP"),
+        ("Lenovo", "Lenovo"),
+        ("LG", "LG"),
+        ("Microsoft", "Microsoft"),
+        ("MSI", "MSI"),
+        ("Razer", "Razer"),
+        ("Samsung", "Samsung"),
+        ("Sony", "Sony"),
+        ("Toshiba", "Toshiba"),
+    ],
+    "mobile": [
+        ("Apple", "Apple"),
+        ("Google", "Google"),
+        ("Huawei", "Huawei"),
+        ("Motorola", "Motorola"),
+        ("Nokia", "Nokia"),
+        ("OnePlus", "OnePlus"),
+        ("Oppo", "Oppo"),
+        ("Realme", "Realme"),
+        ("Samsung", "Samsung"),
+        ("Xiaomi", "Xiaomi"),
+        ("ZTE", "ZTE"),
+    ],
+    "tablet": [
+        ("Apple", "Apple"),
+        ("Lenovo", "Lenovo"),
+        ("Huawei", "Huawei"),
+        ("Samsung", "Samsung"),
+        ("Microsoft", "Microsoft"),
+    ],
+    "peripheral": [
+        ("Brother", "Brother"),
+        ("Canon", "Canon"),
+        ("Epson", "Epson"),
+        ("HP", "HP"),
+        ("Kyocera", "Kyocera"),
+        ("Lexmark", "Lexmark"),
+        ("Ricoh", "Ricoh"),
+        ("Xerox", "Xerox"),
+        ("Otra marca", "Otra marca"),
+    ],
+}
+
+DEVICE_OS_MAP = {
+    "computer": [
+        ("Windows", "Windows"),
+        ("macOS", "macOS"),
+        ("Linux", "Linux"),
+        ("ChromeOS", "ChromeOS"),
+        ("Otro", "Otro"),
+    ],
+    "mobile": [
+        ("Android", "Android"),
+        ("iOS / iPadOS", "iOS / iPadOS"),
+        ("HarmonyOS", "HarmonyOS"),
+        ("Otro", "Otro"),
+    ],
+    "tablet": [
+        ("Android", "Android"),
+        ("iOS / iPadOS", "iOS / iPadOS"),
+        ("Windows", "Windows"),
+        ("ChromeOS", "ChromeOS"),
+        ("Otro", "Otro"),
+    ],
+    "peripheral": [
+        ("Firmware propietario", "Firmware propietario"),
+        ("Otro", "Otro"),
+    ],
+}
+
+
+def _flatten_choice_map(choice_map: dict[str, list[tuple[str, str]]], default_label: str) -> list[tuple[str, str]]:
+    ordered: dict[str, str] = {}
+    for options in choice_map.values():
+        for value, label in options:
+            if value not in ordered:
+                ordered[value] = label
+    return [("", default_label)] + [(value, label) for value, label in ordered.items()]
+
+
+DEVICE_BRAND_CHOICES = _flatten_choice_map(DEVICE_BRAND_MAP, "Seleccione una marca")
+DEVICE_OS_CHOICES = _flatten_choice_map(DEVICE_OS_MAP, "Seleccione un sistema operativo")
 
 
 def optional_int_coerce(value):
@@ -80,7 +180,18 @@ class UserForm(FlaskForm):
 
 class DeviceForm(FlaskForm):
     type = StringField("Tipo de dispositivo", validators=[DataRequired(), Length(max=120)])
-    brand = StringField("Marca", validators=[Optional(), Length(max=120)])
+    category = SelectField(
+        "Categoria",
+        choices=DEVICE_CATEGORY_CHOICES,
+        validators=[DataRequired()],
+        default="computer",
+    )
+    brand = SelectField(
+        "Marca",
+        choices=DEVICE_BRAND_CHOICES,
+        validators=[Optional()],
+        validate_choice=False,
+    )
     model = StringField("Modelo", validators=[Optional(), Length(max=120)])
     serial_number = StringField("Numero de serie", validators=[DataRequired(), Length(max=120)])
     purchase_date = DateField(
@@ -91,6 +202,22 @@ class DeviceForm(FlaskForm):
     )
     country = StringField("Pais", validators=[Optional(), Length(max=120)])
     location = StringField("Ubicacion", validators=[Optional(), Length(max=120)])
+    ip_address = StringField(
+        "Direccion IP",
+        validators=[
+            Optional(),
+            Regexp(
+                r"^([0-9]{1,3}(\.[0-9]{1,3}){3}|[0-9a-fA-F:]+)$",
+                message="Ingrese una direccion IP valida.",
+            ),
+        ],
+    )
+    operating_system = SelectField(
+        "Sistema operativo",
+        choices=DEVICE_OS_CHOICES,
+        validators=[Optional()],
+        validate_choice=False,
+    )
     assigned_user_id = SelectField("Usuario asignado", coerce=int, validators=[Optional()])
     status = SelectField("Estado", validators=[DataRequired()], choices=DEVICE_STATUS_CHOICES)
     notes = TextAreaField("Notas", validators=[Optional()])
@@ -106,7 +233,10 @@ class AccountForm(FlaskForm):
         validators=[DataRequired(), EqualTo("password", message="Las contrasenas no coinciden.")],
     )
     owner_id = SelectField("Propietario", coerce=int, validators=[DataRequired()])
-    device_id = SelectField("Dispositivo", coerce=optional_int_coerce, validators=[Optional()])
+    device_ids = SelectMultipleField("Dispositivos", coerce=int, validators=[Optional()])
+    country = StringField("Pais", validators=[Optional(), Length(max=120)])
+    location = StringField("Ubicacion", validators=[Optional(), Length(max=120)])
+    active = BooleanField("Activo", default=True)
     notes = TextAreaField("Notas", validators=[Optional()])
     submit = SubmitField("Guardar cuenta")
 
@@ -117,3 +247,14 @@ class AccountFilterForm(FlaskForm):
     status = SelectField("Estado", choices=[], validators=[Optional()])
     owner_id = SelectField("Propietario", coerce=int, choices=[], validators=[Optional()])
     submit = SubmitField("Filtrar")
+
+
+class AccountImportForm(FlaskForm):
+    file = FileField(
+        "Archivo Excel",
+        validators=[
+            FileRequired(message="Seleccione un archivo para importar."),
+            FileAllowed(["xlsx", "xls"], message="Solo se permiten archivos Excel (.xlsx, .xls)."),
+        ],
+    )
+    submit = SubmitField("Importar cuentas")

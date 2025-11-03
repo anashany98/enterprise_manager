@@ -44,8 +44,8 @@ class Config:
     REPORT_EXPORT_DIR = os.getenv("REPORT_EXPORT_DIR", str(BASE_DIR / "exports"))
 
     # --- Credenciales del administrador inicial ---
-    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
 
     # --- Retención y copias de seguridad ---
     SECURITY_LOG_RETENTION_DAYS = int(os.getenv("SECURITY_LOG_RETENTION_DAYS", "90"))

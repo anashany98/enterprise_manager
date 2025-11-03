@@ -13,6 +13,9 @@
       <a href="{{ url_for('export_route', table='accounts', fmt='pdf') }}" class="btn btn-outline-secondary">PDF</a>
     </div>
     {% if current_user.role in ['admin', 'technician'] %}
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importAccountsModal">
+      <i class="fa-solid fa-file-import me-2"></i>Importar Excel
+    </button>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
       <i class="fa-solid fa-key me-2"></i>Nueva cuenta
     </button>
@@ -29,7 +32,11 @@
             <th>Servicio</th>
             <th>Usuario</th>
             <th>Propietario</th>
-            <th>Dispositivo</th>
+            <th>Pais</th>
+            <th>Ubicacion</th>
+            <th>Dispositivos</th>
+            <th>Contrasena</th>
+            <th>Estado</th>
             <th>Modificado</th>
             <th class="text-end">Acciones</th>
           </tr>
@@ -40,10 +47,31 @@
             <td>{{ account.service }}</td>
             <td>{{ account.username }}</td>
             <td>{{ account.owner.name if account.owner else 'N/D' }}</td>
-            <td>{{ account.device.serial_number if account.device else 'N/D' }}</td>
+            <td>{{ account.country or 'N/D' }}</td>
+            <td>{{ account.location or 'N/D' }}</td>
+            <td>{{ account.devices | map(attribute='serial_number') | join(', ') if account.devices else 'N/D' }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span id="password-display-{{ account.id }}" class="text-monospace small text-muted">••••••</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary reveal-password"
+                  data-account="{{ account.id }}"
+                  data-target="#password-display-{{ account.id }}"
+                  data-url="{{ url_for('accounts.reveal_account_password', account_id=account.id) }}"
+                  data-visible="false"
+                >
+                  Ver
+                </button>
+              </div>
+            </td>
+            <td>
+              <span class="badge {{ 'text-bg-success' if account.active else 'text-bg-secondary' }}">
+                {{ 'Activo' if account.active else 'Inactivo' }}
+              </span>
+            </td>
             <td>{{ account.last_modified|datetime }}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-secondary reveal-password" data-account="{{ account.id }}"><i class="fa-solid fa-eye"></i></button>
               {% if current_user.role in ['admin', 'technician'] or account.owner_id == current_user.id %}
               <a href="{{ url_for('accounts.edit_account', account_id=account.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
               {% endif %}
@@ -62,6 +90,33 @@
 </div>
 
 {% if current_user.role in ['admin', 'technician'] %}
+<div class="modal fade" id="importAccountsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Importar cuentas desde Excel</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('accounts.import_accounts') }}" method="post" enctype="multipart/form-data" novalidate>
+        {{ import_form.hidden_tag() }}
+        <div class="modal-body">
+          <p class="text-muted small mb-3">
+            El archivo debe contener las columnas: <code>service</code>, <code>username</code>, <code>password</code> y <code>owner_email</code>.
+            Opcionalmente puede incluir <code>device_serials</code> (o <code>device_serial</code>), <code>notes</code>, <code>country</code>, <code>location</code> y <code>active</code>.
+          </p>
+          <div class="mb-3">
+            {{ import_form.file.label(class="form-label") }}
+            {{ import_form.file(class="form-control") }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ import_form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 <div class="modal fade" id="createAccountModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
@@ -105,8 +160,23 @@
               {{ form.owner_id(class="form-select") }}
             </div>
             <div class="col-md-6">
-              {{ form.device_id.label(class="form-label") }}
-              {{ form.device_id(class="form-select") }}
+              {{ form.country.label(class="form-label") }}
+              {{ form.country(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.location.label(class="form-label") }}
+              {{ form.location(class="form-control") }}
+            </div>
+            <div class="col-md-12">
+              {{ form.device_ids.label(class="form-label") }}
+              {{ form.device_ids(class="form-select", multiple=True, size=5) }}
+              <div class="form-text">Use Ctrl/Cmd para seleccionar varios dispositivos.</div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check mt-4">
+                {{ form.active(class="form-check-input") }}
+                {{ form.active.label(class="form-check-label ms-2") }}
+              </div>
             </div>
             <div class="col-12">
               {{ form.notes.label(class="form-label") }}

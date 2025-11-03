@@ -102,28 +102,44 @@ class User(UserMixin, TimestampMixin, db.Model):
         return value
 
 
+account_devices = db.Table(
+    "account_devices",
+    db.Column("account_id", db.Integer, db.ForeignKey("accounts.id"), primary_key=True),
+    db.Column("device_id", db.Integer, db.ForeignKey("devices.id"), primary_key=True),
+)
+
+
 class Device(TimestampMixin, db.Model):
     __tablename__ = "devices"
 
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(120), nullable=False)
+    category = db.Column(db.String(50), nullable=False, default="computer")
     brand = db.Column(db.String(120))
     model = db.Column(db.String(120))
     serial_number = db.Column(db.String(120), unique=True, nullable=False)
     purchase_date = db.Column(db.Date)
+    operating_system = db.Column(db.String(120))
     country = db.Column(db.String(120))
     location = db.Column(db.String(120))
+    ip_address = db.Column(db.String(45))
     assigned_user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     status = db.Column(db.String(120), default="active")
     notes = db.Column(db.Text)
 
     assigned_user = db.relationship("User", back_populates="devices")
-    accounts = db.relationship("Account", back_populates="device", lazy="dynamic")
+    accounts = db.relationship(
+        "Account",
+        secondary=account_devices,
+        back_populates="devices",
+        lazy="selectin",
+    )
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
             "type": self.type,
+            "category": self.category,
             "brand": self.brand,
             "model": self.model,
             "serial_number": self.serial_number,
@@ -132,6 +148,8 @@ class Device(TimestampMixin, db.Model):
             else None,
             "country": self.country,
             "location": self.location,
+            "ip_address": self.ip_address,
+            "operating_system": self.operating_system,
             "assigned_user_id": self.assigned_user_id,
             "status": self.status,
             "notes": self.notes,
@@ -146,14 +164,21 @@ class Account(TimestampMixin, db.Model):
     username = db.Column(db.String(120), nullable=False)
     password_encrypted = db.Column(db.LargeBinary, nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    device_id = db.Column(db.Integer, db.ForeignKey("devices.id"))
     notes = db.Column(db.Text)
+    country = db.Column(db.String(120))
+    location = db.Column(db.String(120))
+    active = db.Column(db.Boolean, default=True, nullable=False)
     last_modified = db.Column(
         db.DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow
     )
 
     owner = db.relationship("User", back_populates="accounts")
-    device = db.relationship("Device", back_populates="accounts")
+    devices = db.relationship(
+        "Device",
+        secondary=account_devices,
+        back_populates="accounts",
+        lazy="selectin",
+    )
 
     def set_password(self, password: str) -> None:
         self.password_encrypted = encrypt_password(password)
@@ -167,8 +192,11 @@ class Account(TimestampMixin, db.Model):
             "service": self.service,
             "username": self.username,
             "owner_id": self.owner_id,
-            "device_id": self.device_id,
+            "device_ids": [device.id for device in self.devices],
             "notes": self.notes,
+            "country": self.country,
+            "location": self.location,
+            "active": self.active,
             "last_modified": self.last_modified.isoformat()
             if self.last_modified
             else None,

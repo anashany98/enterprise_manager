@@ -101,9 +101,22 @@ function bindRevealPassword() {
   document.querySelectorAll('.reveal-password').forEach((button) => {
     button.addEventListener('click', async () => {
       const accountId = button.dataset.account;
+      const targetSelector = button.dataset.target;
+      const target = targetSelector ? document.querySelector(targetSelector) : null;
+      const isVisible = button.dataset.visible === 'true';
+      if (isVisible) {
+        if (target) {
+          target.textContent = '••••••';
+          target.classList.add('text-muted');
+        }
+        button.dataset.visible = 'false';
+        button.textContent = 'Ver';
+        return;
+      }
       try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-        const response = await fetch(`/accounts/${accountId}/reveal`, {
+        const url = button.dataset.url || `/accounts/${accountId}/reveal`;
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -114,10 +127,18 @@ function bindRevealPassword() {
           throw new Error('No autorizado');
         }
         const data = await response.json();
-        navigator.clipboard.writeText(data.password).catch(() => {});
-        showInlineToast(`Contrasena copiada: ${data.password}`);
+        if (target) {
+          target.textContent = data.password || 'N/D';
+          target.classList.remove('text-muted');
+        }
+        button.dataset.visible = 'true';
+        button.textContent = 'Ocultar';
       } catch (error) {
         showInlineToast('No fue posible obtener la contrasena', 'danger');
+        if (target) {
+          target.textContent = 'Error';
+          target.classList.add('text-danger');
+        }
       }
     });
   });

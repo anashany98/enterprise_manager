@@ -41,8 +41,23 @@
               {{ form.owner_id(class="form-select") }}
             </div>
             <div class="col-md-6">
-              {{ form.device_id.label(class="form-label") }}
-              {{ form.device_id(class="form-select") }}
+              {{ form.country.label(class="form-label") }}
+              {{ form.country(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.location.label(class="form-label") }}
+              {{ form.location(class="form-control") }}
+            </div>
+            <div class="col-md-12">
+              {{ form.device_ids.label(class="form-label") }}
+              {{ form.device_ids(class="form-select", multiple=True, size=5) }}
+              <div class="form-text">Use Ctrl/Cmd para seleccionar varios dispositivos.</div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check mt-4">
+                {{ form.active(class="form-check-input") }}
+                {{ form.active.label(class="form-check-label ms-2") }}
+              </div>
             </div>
             <div class="col-12">
               {{ form.notes.label(class="form-label") }}

@@ -3,7 +3,7 @@ from flask_login import login_required
 
 from sqlalchemy.orm import joinedload
 
-from forms import DeviceForm
+from forms import DEVICE_BRAND_MAP, DEVICE_OS_MAP, DeviceForm
 from models import Device, User, db
 from utils import log_action, role_required
 
@@ -26,7 +26,13 @@ def list_devices():
     )
     form = DeviceForm()
     _populate_form_choices(form)
-    return render_template("devices.html", devices=devices, form=form)
+    return render_template(
+        "devices.html",
+        devices=devices,
+        form=form,
+        device_brand_map=DEVICE_BRAND_MAP,
+        device_os_map=DEVICE_OS_MAP,
+    )
 
 
 @bp.route("/create", methods=["POST"])
@@ -40,14 +46,21 @@ def create_device():
         if assigned_user_id == 0:
             assigned_user_id = None
 
+        brand_value = (form.brand.data or "").strip()
+        operating_system = (form.operating_system.data or "").strip()
+        ip_address = (form.ip_address.data or "").strip()
+
         device = Device(
             type=form.type.data,
-            brand=form.brand.data,
+            category=form.category.data,
+            brand=brand_value or None,
             model=form.model.data,
             serial_number=form.serial_number.data,
             purchase_date=form.purchase_date.data,
             country=form.country.data,
             location=form.location.data,
+            ip_address=ip_address or None,
+            operating_system=operating_system or None,
             assigned_user_id=assigned_user_id,
             status=form.status.data,
             notes=form.notes.data,
@@ -72,12 +85,17 @@ def edit_device(device_id: int):
     if request.method == "POST":
         if form.validate_on_submit():
             device.type = form.type.data
-            device.brand = form.brand.data
+            device.category = form.category.data
+            brand_value = (form.brand.data or "").strip()
+            device.brand = brand_value or None
             device.model = form.model.data
             device.serial_number = form.serial_number.data
             device.purchase_date = form.purchase_date.data
             device.country = form.country.data
             device.location = form.location.data
+            device.ip_address = (form.ip_address.data or "").strip() or None
+            operating_system = (form.operating_system.data or "").strip()
+            device.operating_system = operating_system or None
             assigned_user_id = form.assigned_user_id.data or None
             if assigned_user_id == 0:
                 assigned_user_id = None
@@ -94,7 +112,13 @@ def edit_device(device_id: int):
 
     if device.assigned_user_id is None:
         form.assigned_user_id.data = 0
-    return render_template("device_edit.html", device=device, form=form)
+    return render_template(
+        "device_edit.html",
+        device=device,
+        form=form,
+        device_brand_map=DEVICE_BRAND_MAP,
+        device_os_map=DEVICE_OS_MAP,
+    )
 
 
 @bp.route("/<int:device_id>/delete", methods=["POST"])
